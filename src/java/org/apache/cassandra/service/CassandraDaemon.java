@@ -127,7 +127,7 @@ public class CassandraDaemon
         }
     }
 
-    private static final CassandraDaemon instance = new CassandraDaemon();
+    public static final CassandraDaemon instance = new CassandraDaemon();
 
     /**
      * The earliest legit timestamp a casandra instance could have ever launched.

@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import org.apache.cassandra.io.util.FastByteArrayInputStream;
 import org.apache.cassandra.net.*;
 import org.apache.cassandra.tracing.Tracing;
+import org.apache.cassandra.utils.RequestInfoLocal;
 
 public class MutationVerbHandler implements IVerbHandler<Mutation>
 {
@@ -38,6 +39,10 @@ public class MutationVerbHandler implements IVerbHandler<Mutation>
         {
             // Check if there were any forwarding headers in this message
             byte[] from = message.parameters.get(Mutation.FORWARD_FROM);
+            if (message.from != null) {
+                RequestInfoLocal.from.set(message.from.getHostAddress());
+            }
+
             InetAddress replyTo;
             if (from == null)
             {
@@ -59,6 +64,10 @@ public class MutationVerbHandler implements IVerbHandler<Mutation>
         catch (IOException e)
         {
             logger.error("Error in mutation", e);
+        }
+        finally
+        {
+            RequestInfoLocal.from.set(null);
         }
     }
 

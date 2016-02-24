@@ -19,6 +19,7 @@ package org.apache.cassandra.db;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.CharacterCodingException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -45,9 +46,12 @@ import org.apache.cassandra.db.index.SecondaryIndex;
 import org.apache.cassandra.db.index.SecondaryIndexManager;
 import org.apache.cassandra.io.sstable.SSTableReader;
 import org.apache.cassandra.locator.AbstractReplicationStrategy;
+import org.apache.cassandra.service.CassandraDaemon;
 import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.service.pager.QueryPagers;
 import org.apache.cassandra.tracing.Tracing;
+import org.apache.cassandra.utils.ByteBufferUtil;
+import org.apache.cassandra.utils.RequestInfoLocal;
 import org.apache.cassandra.utils.concurrent.OpOrder;
 import org.apache.cassandra.metrics.KeyspaceMetrics;
 
@@ -369,6 +373,7 @@ public class Keyspace
      */
     public void apply(Mutation mutation, boolean writeCommitLog, boolean updateIndexes)
     {
+        long currentTime = System.currentTimeMillis() * 1000;
         try (OpOrder.Group opGroup = writeOrder.start())
         {
             // write the mutation to the commitlog and memtables
@@ -394,6 +399,33 @@ public class Keyspace
                                                       ? cfs.indexManager.updaterFor(key, cf, opGroup)
                                                       : SecondaryIndexManager.nullUpdater;
                 cfs.apply(key, cf, updater, opGroup, replayPosition);
+
+                if (mutation.getKeyspaceName().equals("system")
+                    || CassandraDaemon.instance == null
+                    || CassandraDaemon.instance.thriftServer == null
+                    || CassandraDaemon.instance.nativeServer == null
+                    || !CassandraDaemon.instance.thriftServer.isRunning()
+                    || !CassandraDaemon.instance.nativeServer.isRunning()) {
+                    continue;
+                }
+
+                final String action = cf.isMarkedForDelete() ? "delete" : "update";
+                for (Cell cell: cf.getSortedColumns()) {
+                    try
+                    {
+
+                        logger.error("Received from {}: {} KS {} CF {} K {} C {} Size {} Timestamp {} at {}. Diff is: {}",
+                                     RequestInfoLocal.from.get(),
+                                     action, mutation.getKeyspaceName(), cf.metadata.cfName,
+                                     ByteBufferUtil.string(mutation.key()),
+                                     ByteBufferUtil.string(cell.name().toByteBuffer()),
+                                     cell.cellDataSize(),
+                                     cell.timestamp(), currentTime, currentTime - cell.timestamp());
+                    }
+                    catch (CharacterCodingException e)
+                    {
+                    }
+                }
             }
         }
     }
