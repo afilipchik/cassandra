@@ -54,6 +54,7 @@ import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.config.Schema;
 import org.apache.cassandra.db.*;
 import org.apache.cassandra.db.commitlog.CommitLog;
+import org.apache.cassandra.events.EventsManager;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.cassandra.io.FSError;
 import org.apache.cassandra.io.sstable.CorruptSSTableException;
@@ -357,6 +358,9 @@ public class CassandraDaemon
             logger.warn("Unable to start GCInspector (currently only supported on the Sun JVM)");
         }
 
+        // init Events Manager
+        EventsManager.getInstance();
+
         // replay the log if necessary
         try
         {
@@ -650,6 +654,7 @@ public class CassandraDaemon
 
     public static void main(String[] args)
     {
+
         instance.activate();
     }
 

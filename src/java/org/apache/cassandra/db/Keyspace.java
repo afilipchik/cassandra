@@ -32,20 +32,26 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
 
 import com.google.common.base.Function;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.apache.cassandra.config.*;
+import org.apache.cassandra.config.CFMetaData;
+import org.apache.cassandra.config.Config;
+import org.apache.cassandra.config.DatabaseDescriptor;
+import org.apache.cassandra.config.KSMetaData;
+import org.apache.cassandra.config.Schema;
 import org.apache.cassandra.db.commitlog.CommitLog;
 import org.apache.cassandra.db.commitlog.ReplayPosition;
 import org.apache.cassandra.db.compaction.CompactionManager;
 import org.apache.cassandra.db.filter.QueryFilter;
 import org.apache.cassandra.db.index.SecondaryIndex;
 import org.apache.cassandra.db.index.SecondaryIndexManager;
+import org.apache.cassandra.events.EventsManager;
+import org.apache.cassandra.events.MessageReceivedEvent;
 import org.apache.cassandra.io.sstable.SSTableReader;
 import org.apache.cassandra.locator.AbstractReplicationStrategy;
+import org.apache.cassandra.metrics.KeyspaceMetrics;
 import org.apache.cassandra.service.CassandraDaemon;
 import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.service.pager.QueryPagers;
@@ -53,7 +59,6 @@ import org.apache.cassandra.tracing.Tracing;
 import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.cassandra.utils.RequestInfoLocal;
 import org.apache.cassandra.utils.concurrent.OpOrder;
-import org.apache.cassandra.metrics.KeyspaceMetrics;
 
 /**
  * It represents a Keyspace.
@@ -409,18 +414,21 @@ public class Keyspace
                     continue;
                 }
 
-                final String action = cf.isMarkedForDelete() ? "delete" : "update";
+                final Short delete = cf.isMarkedForDelete() ? (short) 1 : (short) 0;
                 for (Cell cell: cf.getSortedColumns()) {
                     try
                     {
-
-                        logger.error("Received from {}: {} KS {} CF {} K {} C {} Size {} Timestamp {} at {}. Diff is: {}",
-                                     RequestInfoLocal.from.get(),
-                                     action, mutation.getKeyspaceName(), cf.metadata.cfName,
-                                     ByteBufferUtil.string(mutation.key()),
-                                     ByteBufferUtil.string(cell.name().toByteBuffer()),
-                                     cell.cellDataSize(),
-                                     cell.timestamp(), currentTime, currentTime - cell.timestamp());
+                        EventsManager.getInstance()
+                                     .sendEvent(new MessageReceivedEvent(RequestInfoLocal.from.get(),
+                                                                         mutation.getKeyspaceName(),
+                                                                         cf.metadata.cfName,
+                                                                         ByteBufferUtil.string(mutation.key()),
+                                                                         ByteBufferUtil.string(cell.name()
+                                                                                                   .toByteBuffer()),
+                                                                         delete,
+                                                                         cell.cellDataSize(),
+                                                                         cell.timestamp(),
+                                                                         currentTime));
                     }
                     catch (CharacterCodingException e)
                     {
