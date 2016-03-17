@@ -996,6 +996,37 @@ public class DatabaseDescriptor
         return conf.counter_write_request_timeout_in_ms;
     }
 
+    public static String getKinesisFirehoseAwsAccessKey()
+    {
+        return conf.kinesis_firehose_aws_access_key;
+    }
+
+    public static String getKinesisFirehoseAwsSecretKey()
+    {
+        return conf.kinesis_firehose_aws_secret_key;
+    }
+
+    public static String getKinesisFirehoseS3BucketArn()
+    {
+        return conf.kinesis_firehose_s3_bucket_arn;
+    }
+
+    public static String getKinesisFirehoseRoleArn()
+    {
+        return conf.kinesis_firehose_role_arn;
+    }
+
+    public static String getKinesisFirehoseStreamNamePrefix()
+    {
+        return conf.kinesis_firehose_stream_name_prefix;
+    }
+
+    public static boolean getKinesisFirehoseEnabled()
+
+    {
+        return conf.kinesis_firehose_enabled;
+    }
+
     public static void setCounterWriteRpcTimeout(Long timeOutInMillis)
     {
         conf.counter_write_request_timeout_in_ms = timeOutInMillis;

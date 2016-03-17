@@ -230,6 +230,13 @@ public class Config
 
     public int gc_warn_threshold_in_ms = 0;
 
+    public String kinesis_firehose_aws_access_key;
+    public String kinesis_firehose_aws_secret_key;
+    public String kinesis_firehose_s3_bucket_arn;
+    public String kinesis_firehose_role_arn;
+    public String kinesis_firehose_stream_name_prefix;
+    public boolean kinesis_firehose_enabled;
+
     private static final CsvPreference STANDARD_SURROUNDING_SPACES_NEED_QUOTES = new CsvPreference.Builder(CsvPreference.STANDARD_PREFERENCE)
                                                                                                   .surroundingSpacesNeedQuotes(true).build();
 

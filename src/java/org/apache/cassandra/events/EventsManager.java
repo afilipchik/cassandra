@@ -21,6 +21,7 @@ package org.apache.cassandra.events;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.events.firehose.KinesisFirehoseBatchMessageChannel;
 import org.apache.cassandra.events.firehose.KinesisFirehoseMessageChannel;
 
@@ -37,8 +38,11 @@ public class EventsManager
 
     private EventsManager()
     {
-//        channel = new KinesisFirehoseMessageChannel();
-        channel = new KinesisFirehoseBatchMessageChannel();
+        if (DatabaseDescriptor.getKinesisFirehoseEnabled()) {
+            channel = new KinesisFirehoseBatchMessageChannel();
+        } else {
+            channel = new NullMesageChannel();
+        }
     }
 
     public static EventsManager getInstance() {

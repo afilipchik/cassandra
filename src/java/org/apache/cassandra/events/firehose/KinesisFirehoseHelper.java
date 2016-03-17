@@ -31,6 +31,8 @@ import com.amazonaws.services.kinesisfirehose.model.EncryptionConfiguration;
 import com.amazonaws.services.kinesisfirehose.model.NoEncryptionConfig;
 import com.amazonaws.services.kinesisfirehose.model.ResourceInUseException;
 import com.amazonaws.services.kinesisfirehose.model.S3DestinationConfiguration;
+import org.apache.cassandra.config.DatabaseDescriptor;
+import org.apache.cassandra.utils.FBUtilities;
 
 /**
  * @author Alexander Filipchik (alexander.filipchik@am.sony.com)
@@ -39,25 +41,20 @@ public class KinesisFirehoseHelper
 {
 
     public static AWSCredentials getCredentials() {
-        String accessKey = "";
-        String secretKey = "";
+        String accessKey = DatabaseDescriptor.getKinesisFirehoseAwsAccessKey();
+        String secretKey = DatabaseDescriptor.getKinesisFirehoseAwsSecretKey();
         return new BasicAWSCredentials(accessKey, secretKey);
     }
 
     public static String createStream(AmazonKinesisFirehose client) {
         String prefix;
         String deliveryStreamName;
-        try
-        {
-            deliveryStreamName = "" +
-                                 InetAddress.getLocalHost().getHostName();
-            prefix = "replication_lag/" + 0 + "/" +
-                     InetAddress.getLocalHost().getHostName();
-        }
-        catch (UnknownHostException e)
-        {
-            throw new RuntimeException(e);
-        }
+        String localDc = DatabaseDescriptor.getLocalDataCenter();
+        String localRack = DatabaseDescriptor.getEndpointSnitch().getRack(FBUtilities.getBroadcastAddress());
+        String localIp = DatabaseDescriptor.getListenAddress().getHostAddress();
+        deliveryStreamName = DatabaseDescriptor.getKinesisFirehoseStreamNamePrefix() +
+                             localDc + '_' + localRack + '_' + localIp;
+        prefix = "replication_lag/" + localDc + '/' + localRack + '/' + localIp;
 
         try
         {
@@ -65,7 +62,7 @@ public class KinesisFirehoseHelper
             createDeliveryStreamRequest.setDeliveryStreamName(deliveryStreamName);
 
             S3DestinationConfiguration s3DestinationConfiguration = new S3DestinationConfiguration();
-            s3DestinationConfiguration.setBucketARN("");
+            s3DestinationConfiguration.setBucketARN(DatabaseDescriptor.getKinesisFirehoseS3BucketArn());
             s3DestinationConfiguration.setPrefix(prefix);
 
             s3DestinationConfiguration.setCompressionFormat(CompressionFormat.UNCOMPRESSED);
@@ -77,7 +74,7 @@ public class KinesisFirehoseHelper
             bufferingHints.setSizeInMBs(128);
             s3DestinationConfiguration.setBufferingHints(bufferingHints);
 
-            s3DestinationConfiguration.setRoleARN("");
+            s3DestinationConfiguration.setRoleARN(DatabaseDescriptor.getKinesisFirehoseRoleArn());
             createDeliveryStreamRequest.setS3DestinationConfiguration(s3DestinationConfiguration);
 
             client.createDeliveryStream(createDeliveryStreamRequest);
