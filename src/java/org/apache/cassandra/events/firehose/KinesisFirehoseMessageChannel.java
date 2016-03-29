@@ -91,10 +91,7 @@ public class KinesisFirehoseMessageChannel implements MessageChannel
         private Record createRecord(long id, int runId, String message)
         {
             Record record = new Record();
-            record.setData(ByteBuffer.wrap((id
-                                            + ':' + System.currentTimeMillis()
-                                            + ':' + message + '\n')
-                                           .getBytes()));
+            record.setData(ByteBuffer.wrap((message + '\n').getBytes()));
             return record;
         }
     }

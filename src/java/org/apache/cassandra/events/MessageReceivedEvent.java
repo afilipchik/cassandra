@@ -18,8 +18,12 @@
 
 package org.apache.cassandra.events;
 
+import java.net.InetAddress;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import org.apache.cassandra.events.firehose.KinesisFirehoseHelper;
 
 /**
  * @author Alexander Filipchik (alexander.filipchik@am.sony.com)
@@ -30,7 +34,7 @@ public class MessageReceivedEvent implements Event
     private static final Logger logger = LoggerFactory.getLogger(MessageReceivedEvent.class);
     // logger.error("Received from {}: {} KS {} CF {} K {} C {} Size {} Timestamp {} at {}. Diff is: {}",
 
-    private String senderIp;
+    private InetAddress senderIp;
     private String keySpace;
     private String columnFamily;
     private String key;
@@ -40,8 +44,9 @@ public class MessageReceivedEvent implements Event
     private long createdTimestamp;
     private long receivedTimestamp;
 
-    public MessageReceivedEvent(String senderIp, String keySpace, String columnFamily, String key, String columnName,
-                                short delete, int dataSize, long createdTimestamp, long receivedTimestamp)
+    public MessageReceivedEvent(InetAddress senderIp, String keySpace, String columnFamily, String key,
+                                String columnName, short delete, int dataSize, long createdTimestamp,
+                                long receivedTimestamp)
     {
         this.senderIp = senderIp;
         this.keySpace = keySpace;
@@ -56,7 +61,9 @@ public class MessageReceivedEvent implements Event
 
     public String getString()
     {
-        return "Received:" + senderIp + ':' + keySpace + ':' + columnFamily + ':'
+
+        return " From:" + ((senderIp == null) ? "local" : KinesisFirehoseHelper.getNodeDescription(senderIp, '_'))
+               + ':' + keySpace + ':' + columnFamily + ':'
                + key + ':' + columnName + ':' + delete + ':' + dataSize + ':'
                + createdTimestamp + ':' + receivedTimestamp;
     }

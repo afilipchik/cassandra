@@ -40,7 +40,7 @@ public class MutationVerbHandler implements IVerbHandler<Mutation>
             // Check if there were any forwarding headers in this message
             byte[] from = message.parameters.get(Mutation.FORWARD_FROM);
             if (message.from != null) {
-                RequestInfoLocal.from.set(message.from.getHostAddress());
+                RequestInfoLocal.from.set(message.from);
             }
 
             InetAddress replyTo;

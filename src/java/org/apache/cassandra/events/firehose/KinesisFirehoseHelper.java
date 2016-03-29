@@ -46,6 +46,13 @@ public class KinesisFirehoseHelper
         return new BasicAWSCredentials(accessKey, secretKey);
     }
 
+    public static String getNodeDescription(InetAddress inetAddress, Character delim) {
+        String dc = DatabaseDescriptor.getEndpointSnitch().getDatacenter(inetAddress);
+        String rack = DatabaseDescriptor.getEndpointSnitch().getRack(inetAddress);
+
+        return dc + delim + rack + delim + inetAddress.getHostAddress();
+    }
+
     public static String createStream(AmazonKinesisFirehose client) {
         String prefix;
         String deliveryStreamName;
@@ -54,7 +61,7 @@ public class KinesisFirehoseHelper
         String localIp = DatabaseDescriptor.getListenAddress().getHostAddress();
         deliveryStreamName = DatabaseDescriptor.getKinesisFirehoseStreamNamePrefix() +
                              localDc + '_' + localRack + '_' + localIp;
-        prefix = "replication_lag/" + localDc + '/' + localRack + '/' + localIp;
+        prefix = "replication_lag/" + localDc + '/' + localRack + '/' + localIp + '/';
 
         try
         {
