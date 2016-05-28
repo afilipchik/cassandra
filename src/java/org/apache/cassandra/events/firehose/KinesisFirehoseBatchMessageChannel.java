@@ -25,6 +25,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -60,7 +61,7 @@ public class KinesisFirehoseBatchMessageChannel implements MessageChannel
         configuration.useTcpKeepAlive();
         executor = new ThreadPoolExecutor(100, 100, 10, TimeUnit.SECONDS,
                                           new LinkedBlockingQueue());
-        queue = new ArrayBlockingQueue<>(100000);
+        queue = new LinkedTransferQueue<>();
         for (int i = 0; i < 50; i++)
         {
             executor.submit(new BatchSender(queue, counter));

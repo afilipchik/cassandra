@@ -19,7 +19,6 @@ package org.apache.cassandra.db;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.CharacterCodingException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -56,7 +55,7 @@ import org.apache.cassandra.service.CassandraDaemon;
 import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.service.pager.QueryPagers;
 import org.apache.cassandra.tracing.Tracing;
-import org.apache.cassandra.utils.ByteBufferUtil;
+import org.apache.cassandra.utils.Hex;
 import org.apache.cassandra.utils.RequestInfoLocal;
 import org.apache.cassandra.utils.concurrent.OpOrder;
 
@@ -416,23 +415,16 @@ public class Keyspace
 
                 final Short delete = cf.isMarkedForDelete() ? (short) 1 : (short) 0;
                 for (Cell cell: cf.getSortedColumns()) {
-                    try
-                    {
-                        EventsManager.getInstance()
-                                     .sendEvent(new MessageReceivedEvent(RequestInfoLocal.from.get(),
-                                                                         mutation.getKeyspaceName(),
-                                                                         cf.metadata.cfName,
-                                                                         ByteBufferUtil.string(mutation.key()),
-                                                                         ByteBufferUtil.string(cell.name()
-                                                                                                   .toByteBuffer()),
-                                                                         delete,
-                                                                         cell.cellDataSize(),
-                                                                         cell.timestamp(),
-                                                                         currentTime));
-                    }
-                    catch (CharacterCodingException e)
-                    {
-                    }
+                    EventsManager.getInstance()
+                                 .sendEvent(new MessageReceivedEvent(RequestInfoLocal.from.get(),
+                                                                     mutation.getKeyspaceName(),
+                                                                     cf.metadata.cfName,
+                                                                     Hex.bytesToHex(mutation.key().array()),
+                                                                     Hex.bytesToHex(cell.name().toByteBuffer().array()),
+                                                                     delete,
+                                                                     cell.cellDataSize(),
+                                                                     cell.timestamp(),
+                                                                     currentTime));
                 }
             }
         }
