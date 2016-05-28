@@ -17,6 +17,7 @@
  */
 package org.apache.cassandra.locator;
 
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -148,6 +149,10 @@ public class PropertyFileSnitch extends AbstractNetworkTopologySnitch
         try
         {
             stream = getClass().getClassLoader().getResourceAsStream(SNITCH_PROPERTIES_FILENAME);
+            if (stream == null) {
+                stream = new FileInputStream("cassandra-topology.properties");
+            }
+
             properties.load(stream);
         }
         catch (Exception e)

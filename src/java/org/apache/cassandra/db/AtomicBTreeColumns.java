@@ -31,6 +31,9 @@ import com.google.common.base.Functions;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Iterators;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.apache.cassandra.config.CFMetaData;
 import org.apache.cassandra.db.composites.CellName;
 import org.apache.cassandra.db.composites.Composite;
@@ -57,6 +60,8 @@ import static org.apache.cassandra.db.index.SecondaryIndexManager.Updater;
  */
 public class AtomicBTreeColumns extends ColumnFamily
 {
+    private static final Logger logger = LoggerFactory.getLogger(AtomicBTreeColumns.class);
+
     static final long EMPTY_SIZE = ObjectSizes.measure(new AtomicBTreeColumns(CFMetaData.IndexCf, null))
             + ObjectSizes.measure(new Holder(null, null));
 
@@ -192,6 +197,13 @@ public class AtomicBTreeColumns extends ColumnFamily
     public Pair<Long, Long> addAllWithSizeDelta(final ColumnFamily cm, MemtableAllocator allocator, OpOrder.Group writeOp, Updater indexer)
     {
         ColumnUpdater updater = new ColumnUpdater(this, cm.metadata, allocator, writeOp, indexer);
+//        long currentTime = System.nanoTime();
+//        for (Cell cell: cm.getSortedColumns()) {
+//            logger.error("Received Mutation KS {} CF {} C {} Timestamp {} at {}",
+//                         "bla", cm.metadata.cfName, cell.name().toString(),
+//                         cell.timestamp(), currentTime);
+//        }
+
         DeletionInfo inputDeletionInfoCopy = null;
 
         boolean monitorOwned = false;
